@@ -8,9 +8,10 @@ var getRawbody = require('raw-body')
 
 var Wechat = require('./wechat')
 var util = require('./util')
+var wechat = require('./wechat')
 
-module.exports = function(opts) {
- //   var wechat = new Wechat(opts)
+module.exports = function(opts, handler) {
+    var wechat = new Wechat(opts)
 
     return convert(function *(next) {
         var that = this
@@ -45,25 +46,10 @@ module.exports = function(opts) {
             var content = yield util.parseXMLAsync(data)
 
             var message = util.formatMessage(content.xml)
-            console.log(message)
+            this.weixin = message
+            yield handler.call(this, next)
 
-            if (message.MsgType === 'event') {
-                if (message.Event === 'subscribe') {
-                    var now = new Date().getTime()
-
-                    that.status = 200
-                    that.type = 'application/xml'
-                    that.body = '<xml>' +
-                        '<ToUserName><![CDATA[' + message.FromUserName + ']]></ToUserName>' +
-                        '<FromUserName><![CDATA[' + message.ToUserName + ']]></FromUserName>' +
-                        '<CreateTime>'+ now +'</CreateTime>' +
-                        '<MsgType><![CDATA[text]]></MsgType>' +
-                        '<Content><![CDATA[Hi, Imooc童鞋！]]></Content>' +
-                        '</xml>'
-
-                    return
-                }
-            }
+            wechat.reply.call(this)
         }
     })
 }
