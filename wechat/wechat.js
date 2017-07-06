@@ -11,12 +11,16 @@ var prefix = 'https://api.weixin.qq.com/cgi-bin/'
 var api = {
     accessToken: prefix + 'token?grant_type=client_credential',
     temporary: {// 临时素材
-        upload: prefix + 'media/upload?'
+        upload: prefix + 'media/upload?',
+        fetch: prefix + 'media/get?', // 获取临时素材
     },
     permanent: {//永久素材
         upload: prefix + 'material/add_material?',
         uploadNews: prefix + 'material/add_news?', // 图文
         uploadNewsPic: prefix + 'media/uploadimg?', // 图文消息的图片
+        fetch: prefix + 'material/get_material?', // 获取永久素材
+        del: prefix + 'material/del_material?', // 删除永久素材
+        update: prefix + 'material/update_news?' // 更新永久图文素材
     }
 }
 
@@ -95,6 +99,7 @@ Wechat.prototype.updateAccessToken = function () {
     })
 }
 
+// 上传素材
 Wechat.prototype.uploadMaterial = function (type, material, permanent) { //material素材， permanent是否为永久素材
     var that = this
     var form = {}
@@ -139,6 +144,104 @@ Wechat.prototype.uploadMaterial = function (type, material, permanent) { //mater
                     options.body = form
                 } else {
                     options.formData = form
+                }
+
+                request(options).then(function (response) {
+                    var _data = response.body
+
+                    if (_data) {
+                        resolve(_data)
+                    } else {
+                        throw new Error('Upload material fails')
+                    }
+                })
+                .catch(function (err) {
+                    reject(err)
+                })
+            })
+    })
+}
+
+// 获取素材
+Wechat.prototype.fetchMaterial = function (mediaId, type, permanent) { //material素材， permanent是否为永久素材
+    var that = this
+    var fetchUrl = api.temporary.fetch
+
+    if (permanent) { // 永久素材
+        fetchUrl = api.permanent.fetch
+    }
+
+    return new Promise(function (resolve, reject) {
+        that
+            .fetchAccessToken()
+            .then(function (data) {
+                var url = fetchUrl + 'access_token=' + data.access_token + '&media_id=' + mediaId
+
+                if (!permanent && type === 'video') {
+                    url = replace('https://', 'http://')
+                    url += '&type=' + type
+                }
+
+                resolve(url)
+            })
+    })
+}
+
+// 删除永久素材
+Wechat.prototype.deleteMaterial = function (mediaId) {
+    var that = this
+    var form = {
+        media_id: mediaId
+    }
+
+    return new Promise(function (resolve, reject) {
+        that
+            .fetchAccessToken()
+            .then(function (data) {
+                var url = api.temporary.del + 'access_token=' + data.access_token + '&media_id=' + mediaId
+
+                var options = {
+                    method: 'POST',
+                    url: url,
+                    body: form,
+                    json: true
+                }
+
+                request(options).then(function (response) {
+                    var _data = response.body
+
+                    if (_data) {
+                        resolve(_data)
+                    } else {
+                        throw new Error('Delete material fails')
+                    }
+                })
+                .catch(function (err) {
+                    reject(err)
+                })
+            })
+    })
+}
+
+/* 更新永久图文素材*/
+Wechat.prototype.uplodateMaterial = function (mediaId, mews) {
+    var that = this
+    var form = {
+        media_id: mediaId
+    }
+    _.extend(form, mews)
+
+    return new Promise(function (resolve, reject) {
+        that
+            .fetchAccessToken()
+            .then(function (data) {
+                var url = api.temporary.update + 'access_token=' + data.access_token + '&media_id=' + mediaId
+
+                var options = {
+                    method: 'POST',
+                    url: url,
+                    body: form,
+                    json: true
                 }
 
                 request(options).then(function (response) {
