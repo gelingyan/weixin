@@ -49,14 +49,14 @@ exports.reply = function* (next) {
                 picUrl: 'https://img.alicdn.com/tfs/TB1EGNRRVXXXXazXVXXXXXXXXXX-271-123.png',
                 url: 'http://github.com/'
             }]
-        } else if (content === '5') { // 图片上传
+        } else if (content === '5') { // 临时图片上传
             var data = yield wechatApi.uploadMaterial('image', __dirname + '/2.jpg')
 
             reply = {
                 type: 'image',
                 mediaId: data.media_id
             }
-        } else if (content === '6') { // 视频上传
+        } else if (content === '6') { // 临时视频上传
             var data = yield wechatApi.uploadMaterial('video', __dirname + '/6.mp4')
 
             reply = {
@@ -65,7 +65,7 @@ exports.reply = function* (next) {
                 description: '打个篮球玩玩',
                 mediaId: data.media_id
             }
-        } else if (content === '7') { // 音乐上传
+        } else if (content === '7') { // 临时音乐上传
             var data = yield wechatApi.uploadMaterial('image', __dirname + '/2.jpg') // 音乐的封面图上传
 
             reply = {
@@ -74,6 +74,23 @@ exports.reply = function* (next) {
                 description: '放松一下',
                 musicUrl: 'http://mpge.5nd.com/2015/2015-9-12/66325/1.mp3',
                 thumbMediaId: data.media_id
+            }
+        } else if (content === '8') { // 永久图片上传失败：48001，api功能未授权
+            var data = yield wechatApi.uploadMaterial('image', __dirname + '/3.jpg', {type: 'image'})
+            console.log(data)
+            reply = {
+                type: 'image',
+                mediaId: data.media_id
+            }
+        } else if (content === '9') { // 永久视频上传失败：48001，api功能未授权
+            var data = yield wechatApi.uploadMaterial('video', __dirname + '/6.mp4', {type: 'video', description: '{"title": "Really a nice place", "introduction": "Never think it so easy"}'})
+
+            console.log(data)
+            reply = {
+                type: 'video',
+                title: '回复视频',
+                description: '打个篮球玩玩',
+                mediaId: data.media_id
             }
         }
 
